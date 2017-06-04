@@ -1,14 +1,14 @@
 # CryptoCurrencyBot
 A Slack bot that pulls data from the GDAX API
 
-##Setup:
+## Setup:
 
 To setup a slackbot, you need to follow the first steps here: https://www.fullstackpython.com/blog/build-first-slack-bot-python.html
 
 You need to work through the webpage until you reach the "Coding Our StarterBot" point on that webpage.
 At that point you should have the slackbot ID and the slackbot token
 
-##AutoRun:
+## AutoRun:
 
 I designed this bot to run on a raspberry pi that is running Raspberrian. If you are using the same I suggest using a shell script to startup the python script at startup. This can easily be done by adding the following command to crontab:
 
