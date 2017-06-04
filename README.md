@@ -13,7 +13,7 @@ At that point you should have the slackbot ID and the slackbot token
 
 I designed this bot to run on a raspberry pi that is running Raspberrian. If you are using the same I suggest using a shell script to startup the python script at startup. This can easily be done by adding the following command to crontab:
 
-> @reboot bash /home/pi/Development/pythonstarter.sh
+> @reboot bash pathto/pythonstarter.sh
 
 A copy of pythonstarter.sh is included in the main branch. You may also need to change the permission of the file (chmod +x)
 
