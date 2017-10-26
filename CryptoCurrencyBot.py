@@ -1,36 +1,40 @@
 # Most of this bot was built from this source https://www.fullstackpython.com/blog/build-first-slack-bot-python.html
 # Notable shout out to https://www.dataquest.io/blog/ for their many python tutorials
 
-
 import os
 import time
 from slackclient import SlackClient
-import GDAX
+import requests
+import json
 
-# part 2
 
 # starterbot's ID as an environment variable
 BOT_ID = os.environ.get("BOT_ID")
 
-# constants
+# convert the bot ID into a useful string
 AT_BOT = "<@" + BOT_ID + ">"
 
-#Programmed commands for slackbot
+# programmed commands for the slackbot
 EXAMPLE_COMMAND = "do"
 GET_BTC = "btc"
 GET_ETH = "eth"
 GET_LTC = "ltc"
+GET_OMG = "omg"
 HELP = "help"
 UPDATE_ETH = "update eth"
 UPDATE = "update"
 
+# defining currencies for Bittrex
+# The API for Bitttrex can be found here: https://bittrex.com/home/api
+# The list of supported markets can be found here: https://bittrex.com/api/v1.1/public/getmarkets
+# For this script we are pulling four currencies (Bitcoin, LightCoin, OmiseGO, and Etherum) with values relative to the US Dollar
+btc="USDT-BTC"
+ltc="USDT-LTC"
+omg="USDT-OMG"
+eth="USDT-ETH"
 
-# instantiate Slack & Twilio clients and GDAX
+# instantiate Slack & Twilio clients
 slack_client = SlackClient(os.environ.get('SLACK_BOT_TOKEN'))
-publicClient = GDAX.PublicClient()
-
-
-# part 4
 
 
 def handle_command(command, channel):
@@ -40,87 +44,68 @@ def handle_command(command, channel):
         returns back what it needs for clarification.
     """
     response = "Whatever you typed in is not programed right now. If you want that, talk to Kip."
-
+    
     if command.startswith(EXAMPLE_COMMAND):
         response = "Sure...write some more code then I can do that!"
-    
-    #A simple help command that outputs the string below
+        
     if command.startswith(HELP):
-        response = "Use the following: \n@cryptobot btc \n@cryptobot eth \n@cryptobot ltc \n@cryptobot update eth"
+        response = "Use the following: \n@cryptobot btc \n@cryptobot eth \n@cryptobot ltc \n@cryptobot omg \n@cryptobot update"
 
+    # this is a simple set of commands to pull the data from bittrex and grab the last trade
+    # the api calls gets an odd nested dictionary-list-dictionary
     if command.startswith(GET_BTC):
-        # Set a currency product
-        publicClient = GDAX.PublicClient(product_id="BTC-USD")
-        #pull history from last 24 hours - to get last bid
-        dataoutput=publicClient.getProduct24HrStats()
-        #grab the value of the last trade, the data is truncated because the data is passed as a float
-        BTCPrice=dataoutput["last"]        
-        response = "Current price for Bitcoin is $" + BTCPrice[:7]
+        url="https://bittrex.com/api/v1.1/public/getticker?market=USDT-BTC"
+        response = requests.get(url)
+        data = response.json()
+        trades = data["result"]
+        lasttrade=trades["Last"]
+        response = "Current price for Bitcoin is $" + str(lasttrade)
+
 
     if command.startswith(GET_ETH):
-        # Set a currency product
-        publicClient = GDAX.PublicClient(product_id="ETH-USD")
-        #pull history from last 24 hours - to get last bid
-        dataoutput=publicClient.getProduct24HrStats()
-        #grab the value of the last trade, the data is truncated because the data is passed as a float
-        ETHPrice=dataoutput["last"]      
-        response = "Current price for Ethereum is $" + ETHPrice[:6]
+        url="https://bittrex.com/api/v1.1/public/getticker?market=USDT-ETH"
+        response = requests.get(url)
+        data = response.json()
+        trades = data["result"]
+        lasttrade=trades["Last"]
+        response = "Current price for Etherum is $" + str(lasttrade)
 
     if command.startswith(GET_LTC):
-        # Set a currency product
-        publicClient = GDAX.PublicClient(product_id="LTC-USD")
-        #pull history from last 24 hours - to get last bid
-        dataoutput=publicClient.getProduct24HrStats()
-        #grab the value of the last trade, the data is truncated because the data is passed as a float
-        LTCPrice=dataoutput["last"]   
-        response = "Current price for Litecoin is $" + LTCPrice[:5]
+        url="https://bittrex.com/api/v1.1/public/getticker?market=USDT-LTC"
+        response = requests.get(url)
+        data = response.json()
+        trades = data["result"]
+        lasttrade=trades["Last"]
+        response = "Current price for LightCoin is $" + str(lasttrade)
 
-        #this is a larger data request to get all the data on ETH
-    if (command.startswith(UPDATE)) or (command.startswith(UPDATE_ETH)):
-        # start with getting the eth data
-        publicClient = GDAX.PublicClient(product_id="ETH-USD")
-        #pull history from last 24 hours - to get last bid
-        dataoutput=publicClient.getProduct24HrStats()
-        #grab the value of the last trade
-        lastvalueread=dataoutput["last"]
-        lastvalue=float(lastvalueread)
-        #Get the 24 hour high 
-        highofday=dataoutput["high"]
-        highvalue=float(highofday)
-        #Get the 24 hour low
-        lowofday=dataoutput["low"]
-        lowvalue=float(lowofday)
-        #find the mean between the high and the low
-        mean=((highvalue + lowvalue) / 2)
-        
-        #calculate the standard devation of the three values 
-        #(hahahaha, NOPE. Not a real statistical test but the math will work for this application)
-        val1 = (lowvalue-mean)**2
-        val2 = (highvalue-mean)**2
-        val3 = (lastvalue-mean)**2
-        variance = (val1 + val2 + val3)/3
-        standev = variance ** 0.5
-        #format the value into a string and truncate for an output in slack
-        stdev_str=str(standev)
-        stdev_print=stdev_str[:4]
-        
-        #we are going to call a trend if the last value is more than 1/2 a deviation off the mean
-        # get 1/2 of the standard dev
-        halfstandev=standev/2
-        #determine the difference between the last value and the mean
-        trend_val=(lastvalue-mean)
-        #logic statemnts to articulate our trend
-        if (trend_val > halfstandev):
-            trend_str='positive'	
-        elif (trend_val < -halfstandev):
-            trend_str='negative'	
-        else:
-            trend_str='flat'
-        
-        #now that that is all done, let's export to slack
-        response="ETH movement of: "+stdev_print+" % in the last 24hrs! \n \nThe current trend is: "+trend_str+"\n \n24hr High: $"+str(highvalue)+"\n24hr Low: $"+str(lowvalue)+"\nLast: $"+str(lastvalue)
+    if command.startswith(GET_OMG):
+        url="https://bittrex.com/api/v1.1/public/getticker?market=USDT-OMG"
+        response = requests.get(url)
+        data = response.json()
+        trades = data["result"]
+        lasttrade=trades["Last"]
+        response = "Current price for OmiseGo is $" + str(lasttrade)
 
-    #final statement to export whatever the user called to slack
+    # Update gets the latest trade for all currencies
+    if command.startswith(UPDATE):
+        #create two arrays: one for text output and the other with the Bittrex market name 
+        currencies=[btc, ltc, omg, eth]
+        names=["BTC", "LTC", "OMG", "ETH"]
+        endresult="Here is your market update:"
+        #a small mutation on the routine above. This runs the routine four times while switching the currency. 
+        for x in range(0,4):
+           currency=currencies[x]
+           url="https://bittrex.com/api/v1.1/public/getticker?market="+currency
+           response = requests.get(url)
+           data = response.json()
+           trades = data["result"]
+           lasttrade=trades["Last"]
+           result="" + names[x] + " is trading at $" + str(lasttrade)
+           #The result text is appended to a string that is pre-formatted for Slack.
+           endresult=endresult + " \n " + result
+        response = endresult
+
+#DO NOT DELETE. KEEP THIS INSTRUCTION TO SEND REPLY. 
     slack_client.api_call("chat.postMessage", channel=channel,
                           text=response, as_user=True)
 
