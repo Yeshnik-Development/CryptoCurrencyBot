@@ -38,14 +38,14 @@ ltc="USDT-LTC"
 omg="USDT-OMG"
 eth="USDT-ETH"
 
-# instantiate Slack & Twilio clients
+# initialize Slack  clients
 slack_client = SlackClient(os.environ.get('SLACK_BOT_TOKEN'))
 
 #Function to evaluate the CryptoDB and the latest quote for 3 currencies
 def get_currency_stats():
    message=""
       
-   #define currency varibles for bittrex
+   #define currency variables for Bittrex
    btc="USDT-BTC"
    eth="USDT-ETH"
    omg="USDT-OMG"
@@ -77,7 +77,7 @@ def get_currency_stats():
       with open('/XXXXXXXXX/PATH_TO-FILE/CryptoDB.json') as data_file:    
          DBdata = json.load(data_file)
 
-      #grab the 3 letter name which is the dictionary entry for the currency data
+      #grab the 3-letter name which is the dictionary entry for the currency data
       directory=names[x]
 
       #reset three varibles
@@ -101,33 +101,32 @@ def get_currency_stats():
       # Grab the mean trade value by dividing the sum by the amount of entries
       mean=summation/length
 
-      # Bravo is the slope parameter of the simple linear regression model
-      # Bravo is the sample covariance divided by the sample variance
-      # There is no need to calcuate the estimator so we won't do that
+      # Bravo is the slope parameter of the simple linear regression model and is the sample covariance divided by the sample variance
+      # There is no need to calculate the estimator so we won't do that
       Bravo=(sigxy_sum-2628*summation/72)/(127020-(2628**2)/72)
 
-      #process another loop to calcuate the sum of variances
+      #process another loop to calculate the sum of variances
       for variance_int in range(length):
          variancesum=variancesum+(TradeVals[variance_int]-mean)**2
 
-      #calcuate the variance by dividing the sum by the amount of entries
+      #calculate the variance by dividing the sum by the amount of entries
       variance=variancesum/(length)
 
-      # calcualte standard deviation 
+      # calculate standard deviation 
       standev = variance ** 0.5
 
       #If the data fits a normal distribution, 95% of the trades should be 2 Standard Deviations from the mean
       # As such, on a normal day 4 SD should be near equivalent to the "threshold" list
       variability=4*standev
 
-      #calcualte the order of magnitude of the last trade
+      #calculate the order of magnitude of the last trade
       magnitude=floor(log10(lastvalue))
 
       # Threshold gives us an event trigger
       # The normal swings of the currencies are $300 for BTC, $20 for ETH, and $0.50 for OMG 
       # If you compare these values to the current prices for the currencies you get the following swings:
       # 4.5% for BTC, 6% for ETH, and 8.4% for OMG
-      # These values can be linerized as 8.6% - 1.3% * Magnitude of currency
+      # These values can be linearized as 8.6% - 1.3% * Magnitude of currency
       # e.g. 8.6% - 1.3% * 3 (BTC) = 4.5%
       # See the beginning of the file is you want hard coded values instead of the formula
       threshold_percent=8.4-1.3*(magnitude)
